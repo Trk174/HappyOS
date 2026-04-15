@@ -1,0 +1,26 @@
+# CORE
+linux-zen
+linux-zen-headers
+base
+base-devel
+networkmanager
+grub
+efibootmgr
+sudo
+
+# INTERFAȚĂ (Minimală și rapidă)
+hyprland
+kitty
+waybar
+wofi
+mako
+xdg-desktop-portal-hyprland
+
+# GAMING & CYBER
+steam
+nmap
+wireshark-qt
+metasploit
+git
+python
+python-requests

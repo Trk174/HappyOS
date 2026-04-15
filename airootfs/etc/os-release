@@ -1,0 +1,8 @@
+NAME="HappyOS"
+PRETTY_NAME="HappyOS :)"
+ID=happyos
+ID_LIKE=arch
+BUILD_ID=rolling
+ANSI_COLOR="38;2;255;200;0"
+HOME_URL="https://happyos.com/"
+LOGO=happy-logo
