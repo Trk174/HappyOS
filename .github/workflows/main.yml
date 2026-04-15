@@ -11,25 +11,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Build Tools
+      - name: Build HappyOS
         run: |
+          # 1. Instalăm unelte de bază pe Ubuntu
           sudo apt-get update
-          sudo apt-get install -y arch-install-scripts squashfs-tools xorriso erofs-utils mtools
+          sudo apt-get install -y arch-install-scripts squashfs-tools xorriso erofs-utils mtools git
 
-      - name: Setup Archiso
-        run: |
+          # 2. Instalăm archiso manual să fim siguri că e ultima versiune
           git clone https://gitlab.archlinux.org/archlinux/archiso.git
-          cd archiso
-          sudo make install
+          cd archiso && sudo make install && cd ..
 
-      - name: Run Build
-        run: |
+          # 3. REPARĂM REȚETA (Aici era eroarea 2)
+          # Archiso vrea ca fișierele să aibă permisiuni stricte
+          sudo chown -R root:root .
+          sudo chmod 755 profiledef.sh
+          [ -d airootfs ] || mkdir airootfs
+
+          # 4. START BUILD
           mkdir -p output
-          # Rulăm mkarchiso direct pe mașina Ubuntu
-          # Folosim sudo pentru a evita orice problemă de permisiuni
           sudo mkarchiso -v -w /tmp/archiso-tmp -o output .
 
       - name: Upload ISO
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: HappyOS-ISO
