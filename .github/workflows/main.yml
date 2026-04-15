@@ -14,11 +14,13 @@ jobs:
       - name: Build HappyOS
         run: |
           mkdir -p output
-          # Rulăm totul într-un container de Arch cu permisiuni de Root
           docker run --privileged -v $(pwd):/workspace archlinux:latest /bin/bash -c "
+            # Update și instalare archiso
             pacman -Syu --noconfirm archiso &&
-            # Reparăm permisiunile pentru workspace
-            chmod -R 755 /workspace &&
+            
+            # REPARARE PERMISIUNI (Pas critic pentru GitHub)
+            chown -R root:root /workspace &&
+            
             # START BUILD
             mkarchiso -v -w /tmp/archiso-tmp -o /workspace/output /workspace
           "
