@@ -11,12 +11,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build HappyOS using Docker (Fixed)
+      - name: Build HappyOS
         run: |
           mkdir -p output
+          # Rulăm totul într-un container de Arch cu permisiuni de Root
           docker run --privileged -v $(pwd):/workspace archlinux:latest /bin/bash -c "
             pacman -Syu --noconfirm archiso &&
-            # Construim ISO-ul direct din workspace
+            # Reparăm permisiunile pentru workspace
+            chmod -R 755 /workspace &&
+            # START BUILD
             mkarchiso -v -w /tmp/archiso-tmp -o /workspace/output /workspace
           "
 
