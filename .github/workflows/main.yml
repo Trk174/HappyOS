@@ -21,14 +21,25 @@ jobs:
           git clone https://gitlab.archlinux.org/archlinux/archiso.git
           cd archiso && sudo make install && cd ..
 
-      - name: Fix Permissions and Build
+      - name: Fix and Build
         run: |
+          # REPARĂM REȚETA (Dacă fișierele sunt rătăcite)
+          # Dacă pacman.d e în .github, îl aducem afară
+          if [ -d .github/workflows/pacman.d ]; then
+            mv .github/workflows/pacman.d ./
+          fi
+          
+          # Creăm foldere obligatorii
+          mkdir -p airootfs
           mkdir -p output
-          # Forțăm permisiunile de root pe care le vrea archiso
+          
+          # Permisiuni de Root (Obligatoriu pentru Archiso)
           sudo chown -R root:root .
+          
+          # START BUILD
           sudo mkarchiso -v -w /tmp/archiso-tmp -o output .
 
-      - name: Upload HappyOS
+      - name: Upload ISO
         if: always()
         uses: actions/upload-artifact@v4
         with:
