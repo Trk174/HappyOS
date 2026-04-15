@@ -7,19 +7,26 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+      options: --privileged
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Archiso on Ubuntu
+      - name: Install System Tools
         run: |
-          # Instalăm dependențele necesare pentru a rula mkarchiso
-          sudo apt-get update
-          sudo apt-get install -y arch-install-scripts squashfs-tools libarchive-tools mtools dosemu2 mtools genisoimage xorriso
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm archiso mkinitcpio coreutils
 
-      - name: Build using a specialized Action
-        uses: arch-community/archiso-action@v1
+      - name: Build HappyOS :)
+        run: |
+          mkdir -p output
+          # Rulăm mkarchiso folosind folderul curent ca sursă
+          mkarchiso -v -w /tmp/archiso-tmp -o output .
+
+      - name: Upload ISO
+        uses: actions/upload-artifact@v4
         with:
-          # Această acțiune este făcută special pentru a construi Arch pe GitHub
-          buildmode: iso
-          output-directory: output
+          name: HappyOS-ISO
+          path: output/*.iso
