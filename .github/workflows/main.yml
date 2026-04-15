@@ -11,19 +11,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build HappyOS
+      - name: Install Build Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y arch-install-scripts squashfs-tools xorriso erofs-utils mtools
+
+      - name: Setup Archiso
+        run: |
+          git clone https://gitlab.archlinux.org/archlinux/archiso.git
+          cd archiso
+          sudo make install
+
+      - name: Run Build
         run: |
           mkdir -p output
-          docker run --privileged -v $(pwd):/workspace archlinux:latest /bin/bash -c "
-            # Update și instalare archiso
-            pacman -Syu --noconfirm archiso &&
-            
-            # REPARARE PERMISIUNI (Pas critic pentru GitHub)
-            chown -R root:root /workspace &&
-            
-            # START BUILD
-            mkarchiso -v -w /tmp/archiso-tmp -o /workspace/output /workspace
-          "
+          # Rulăm mkarchiso direct pe mașina Ubuntu
+          # Folosim sudo pentru a evita orice problemă de permisiuni
+          sudo mkarchiso -v -w /tmp/archiso-tmp -o output .
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
