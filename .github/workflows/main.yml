@@ -11,21 +11,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build HappyOS
+      - name: Build HappyOS using Docker (Fixed)
         run: |
-          # Instalăm unelte de virtualizare și suport pentru fișiere Arch
-          sudo apt-get update
-          sudo apt-get install -y arch-install-scripts squashfs-tools xorriso erofs-utils
-
-          # Descarcă și instalează archiso direct din sursele Arch
-          git clone https://gitlab.archlinux.org/archlinux/archiso.git
-          cd archiso
-          sudo make install
-          cd ..
-
-          # Creăm ISO-ul
           mkdir -p output
-          sudo mkarchiso -v -w /tmp/archiso-tmp -o output .
+          docker run --privileged -v $(pwd):/workspace archlinux:latest /bin/bash -c "
+            pacman -Syu --noconfirm archiso &&
+            # Construim ISO-ul direct din workspace
+            mkarchiso -v -w /tmp/archiso-tmp -o /workspace/output /workspace
+          "
 
       - name: Upload ISO
         uses: actions/upload-artifact@v4
