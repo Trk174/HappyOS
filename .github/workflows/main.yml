@@ -11,35 +11,45 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Tools
+      - name: Install System Tools
         run: |
           sudo apt-get update
           sudo apt-get install -y arch-install-scripts squashfs-tools xorriso erofs-utils mtools git
 
-      - name: Install Archiso
+      - name: Setup Archiso
         run: |
+          # Instalam ultima versiune de archiso direct de la sursa
           git clone https://gitlab.archlinux.org/archlinux/archiso.git
           cd archiso && sudo make install && cd ..
 
-      - name: Fix and Build
+      - name: Prepare Workspace and Build
         run: |
-          # REPARĂM REȚETA (Dacă fișierele sunt rătăcite)
-          # Dacă pacman.d e în .github, îl aducem afară
+          # 1. Curatam urmele vechi
+          sudo rm -rf /tmp/archiso-tmp
+          mkdir -p output
+          
+          # 2. REPARARE STRUCTURA (Mutam fisierele daca sunt puse gresit)
+          # Mutam pacman.d in root daca e ratacit in folderul de workflow
           if [ -d .github/workflows/pacman.d ]; then
             mv .github/workflows/pacman.d ./
           fi
           
-          # Creăm foldere obligatorii
-          mkdir -p airootfs
-          mkdir -p output
+          # 3. INTEGRARE FUNDAL (Wallpaper)
+          # Cream folderul de destinatie in interiorul ISO-ului
+          mkdir -p airootfs/usr/share/backgrounds/
+          # Daca ai urcat poza happyos-wallpaper.png, o mutam la locul ei
+          if [ -f happyos-wallpaper.png ]; then
+            cp happyos-wallpaper.png airootfs/usr/share/backgrounds/
+          fi
           
-          # Permisiuni de Root (Obligatoriu pentru Archiso)
+          # 4. SETARE PERMISIUNI (Pasul critic pentru a evita Exit Code 2)
+          # Archiso refuza sa ruleze daca fisierele nu apartin de root
           sudo chown -R root:root .
           
-          # START BUILD
+          # 5. LANSARE CONSTRUCTIE ISO
           sudo mkarchiso -v -w /tmp/archiso-tmp -o output .
 
-      - name: Upload ISO
+      - name: Upload HappyOS ISO
         if: always()
         uses: actions/upload-artifact@v4
         with:
