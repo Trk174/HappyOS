@@ -11,48 +11,46 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install System Tools
+      - name: Install Tools
         run: |
           sudo apt-get update
           sudo apt-get install -y arch-install-scripts squashfs-tools xorriso erofs-utils mtools git
 
-      - name: Setup Archiso
+      - name: Install Archiso
         run: |
           git clone https://gitlab.archlinux.org/archlinux/archiso.git
           cd archiso && sudo make install && cd ..
 
-      - name: The 10/10 Build Fix
+      - name: The Master Build Script
         run: |
-          # 1. REPARARE MIRRORLIST & PACMAN.D
-          # Cream folderul in root, indiferent de ce e pe GitHub
-          sudo mkdir -p pacman.d
+          # 1. CURĂȚARE ȘI PREGĂTIRE
+          sudo rm -rf /tmp/archiso-tmp
+          mkdir -p output
           
-          # Cautam fisierul mirrorlist oriunde ar fi (chiar si in .github/workflows)
-          M_PATH=$(find . -name mirrorlist | head -n 1)
-          if [ -z "$M_PATH" ]; then
+          # 2. REPARARE MIRRORLIST (Eroarea ta principală)
+          # Creăm folderul pacman.d în locația standard
+          sudo mkdir -p pacman.d
+          # Căutăm orice fișier mirrorlist în repo și îl mutăm unde trebuie
+          find . -name mirrorlist -exec sudo cp {} pacman.d/mirrorlist \;
+          # Dacă tot nu există, creăm unul de rezervă
+          if [ ! -f pacman.d/mirrorlist ]; then
             echo "Server = https://geo.mirror.pkgbuild.com/\$repo/os/\$arch" | sudo tee pacman.d/mirrorlist
-          else
-            sudo cp "$M_PATH" pacman.d/mirrorlist
           fi
 
-          # 2. INTEGRARE WALLPAPER
-          # Cream calea oficiala Linux pentru fundaluri
+          # 3. INTEGRARE FUNDAL (Wallpaper-ul tău cu : ) )
           mkdir -p airootfs/usr/share/backgrounds/
-          # Cautam poza cu smiley face (poate fi .png sau .jpg)
-          W_PATH=$(find . -name "*wallpaper*" | head -n 1)
-          if [ -n "$W_PATH" ]; then
-            sudo cp "$W_PATH" airootfs/usr/share/backgrounds/happyos-wallpaper.png
-          fi
-          
-          # 3. PERMISIUNI (Scutul anti-eroare 2)
-          mkdir -p output
-          sudo rm -rf /tmp/archiso-tmp
+          # Căutăm orice imagine care conține "wallpaper" în nume
+          find . -name "*wallpaper*" -exec sudo cp {} airootfs/usr/share/backgrounds/happyos-wallpaper.png \;
+
+          # 4. FORȚARE PERMISIUNI (Esențial pentru succes)
+          # Archiso vrea ca fișierele să aparțină de root (administrator)
           sudo chown -R root:root .
-          
-          # 4. START CONSTRUCTIE
+
+          # 5. LANSARE MKARCHISO
+          # -v (verbose) ne arată tot ce se întâmplă live
           sudo mkarchiso -v -w /tmp/archiso-tmp -o output .
 
-      - name: Upload HappyOS ISO
+      - name: Upload ISO
         if: always()
         uses: actions/upload-artifact@v4
         with:
