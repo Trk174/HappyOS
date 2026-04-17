@@ -18,38 +18,39 @@ jobs:
 
       - name: Setup Archiso
         run: |
-          # Instalam ultima versiune de archiso direct de la sursa
           git clone https://gitlab.archlinux.org/archlinux/archiso.git
           cd archiso && sudo make install && cd ..
 
-      - name: Prepare Workspace and Build
+      - name: Final Fix and Build
         run: |
-          # 1. Curatam urmele vechi
-          sudo rm -rf /tmp/archiso-tmp
-          mkdir -p output
+          # 1. REPARARE MIRRORLIST (Rezolvă eroarea din imagine)
+          # Creăm folderul unde mkarchiso se așteaptă să găsească mirrorlist-ul
+          sudo mkdir -p pacman.d
           
-          # 2. REPARARE STRUCTURA (Mutam fisierele daca sunt puse gresit)
-          # Mutam pacman.d in root daca e ratacit in folderul de workflow
-          if [ -d .github/workflows/pacman.d ]; then
-            mv .github/workflows/pacman.d ./
+          # Căutăm mirrorlist-ul oriunde e ascuns și îl copiem în folderul corect
+          MIRROR_PATH=$(find . -name mirrorlist | head -n 1)
+          if [ -n "$MIRROR_PATH" ]; then
+            sudo cp "$MIRROR_PATH" pacman.d/mirrorlist
+          else
+            # Dacă chiar lipsește, îl creăm pe loc ca să nu mai dea eroare
+            echo "Server = https://mirror.rackspace.com/archlinux/\$repo/os/\$arch" | sudo tee pacman.d/mirrorlist
           fi
-          
-          # 3. INTEGRARE FUNDAL (Wallpaper)
-          # Cream folderul de destinatie in interiorul ISO-ului
+
+          # 2. INTEGRARE FUNDAL (Dacă ai încărcat poza)
           mkdir -p airootfs/usr/share/backgrounds/
-          # Daca ai urcat poza happyos-wallpaper.png, o mutam la locul ei
           if [ -f happyos-wallpaper.png ]; then
-            cp happyos-wallpaper.png airootfs/usr/share/backgrounds/
+            sudo cp happyos-wallpaper.png airootfs/usr/share/backgrounds/
           fi
           
-          # 4. SETARE PERMISIUNI (Pasul critic pentru a evita Exit Code 2)
-          # Archiso refuza sa ruleze daca fisierele nu apartin de root
+          # 3. PERMISIUNI ȘI CURĂȚENIE
+          mkdir -p output
+          sudo rm -rf /tmp/archiso-tmp
           sudo chown -R root:root .
           
-          # 5. LANSARE CONSTRUCTIE ISO
+          # 4. START BUILD
           sudo mkarchiso -v -w /tmp/archiso-tmp -o output .
 
-      - name: Upload HappyOS ISO
+      - name: Upload ISO Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
